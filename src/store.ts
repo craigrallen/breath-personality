@@ -6,7 +6,7 @@ function load(): AppState {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch { /* ignore corrupt/missing localStorage entry */ }
   return { profile: null, sessions: [] };
 }
 

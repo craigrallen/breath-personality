@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { BreathProfile, BreathExercise } from './types';
 import { getProfile } from './store';
 import { Assessment } from './components/Assessment';
@@ -11,13 +11,8 @@ type Screen = 'home' | 'assess' | 'profile' | 'protocol' | 'practice' | 'progres
 
 function App() {
   const [screen, setScreen] = useState<Screen>('home');
-  const [profile, setProfile] = useState<BreathProfile | null>(null);
+  const [profile, setProfile] = useState<BreathProfile | null>(() => getProfile());
   const [exercise, setExercise] = useState<BreathExercise | null>(null);
-
-  useEffect(() => {
-    const saved = getProfile();
-    if (saved) setProfile(saved);
-  }, []);
 
   if (screen === 'assess') {
     return (

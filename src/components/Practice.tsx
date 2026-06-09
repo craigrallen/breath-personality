@@ -19,39 +19,22 @@ export function Practice({ exercise, onDone }: Props) {
   const [phase, setPhase] = useState<Phase>('inhale');
   const [phaseTime, setPhasetime] = useState(exercise.inhale);
   const [countdown, setCountdown] = useState(3);
-  const [started, setStarted] = useState(false);
+  const started = countdown <= 0;
   const [done, setDone] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const startTime = useRef(0);
 
-  // Countdown
-  useEffect(() => {
-    if (started) return;
-    if (countdown <= 0) {
-      setStarted(true);
-      startTime.current = Date.now();
-      return;
-    }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown, started]);
-
-  // Phase timer
-  useEffect(() => {
-    if (!started || done) return;
-    const t = setTimeout(() => {
-      haptic();
-      advancePhase();
-    }, phaseTime * 1000);
-    return () => clearTimeout(t);
-  }, [phase, round, started, done]);
-
-  // Elapsed timer
-  useEffect(() => {
-    if (!started || done) return;
-    const i = setInterval(() => setElapsed(Math.floor((Date.now() - startTime.current) / 1000)), 200);
-    return () => clearInterval(i);
-  }, [started, done]);
+  const finishSession = useCallback((completed: boolean) => {
+    setDone(true);
+    const session: Session = {
+      id: Date.now().toString(),
+      date: Date.now(),
+      exercise: exercise.name,
+      durationSec: Math.floor((Date.now() - startTime.current) / 1000),
+      completed,
+    };
+    addSession(session);
+  }, [exercise]);
 
   const advancePhase = useCallback(() => {
     const phases = ([
@@ -78,19 +61,38 @@ export function Practice({ exercise, onDone }: Props) {
         setPhasetime(phases[0].d);
       }
     }
-  }, [phase, round, exercise]);
+  }, [exercise, phase, round, finishSession]);
 
-  const finishSession = (completed: boolean) => {
-    setDone(true);
-    const session: Session = {
-      id: Date.now().toString(),
-      date: Date.now(),
-      exercise: exercise.name,
-      durationSec: Math.floor((Date.now() - startTime.current) / 1000),
-      completed,
-    };
-    addSession(session);
-  };
+  // Countdown
+  useEffect(() => {
+    if (started) return;
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, started]);
+
+  // Record start time once countdown reaches zero
+  useEffect(() => {
+    if (started && startTime.current === 0) {
+      startTime.current = Date.now();
+    }
+  }, [started]);
+
+  // Phase timer
+  useEffect(() => {
+    if (!started || done) return;
+    const t = setTimeout(() => {
+      haptic();
+      advancePhase();
+    }, phaseTime * 1000);
+    return () => clearTimeout(t);
+  }, [phase, round, started, done, advancePhase, phaseTime]);
+
+  // Elapsed timer
+  useEffect(() => {
+    if (!started || done) return;
+    const i = setInterval(() => setElapsed(Math.floor((Date.now() - startTime.current) / 1000)), 200);
+    return () => clearInterval(i);
+  }, [started, done]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 

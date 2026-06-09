@@ -16,12 +16,24 @@ export function Assessment({ onComplete }: Props) {
   const analyzerRef = useRef<BreathAnalyzer | null>(null);
   const rafRef = useRef(0);
 
-  const updateAmplitude = useCallback(() => {
+  function updateAmplitude() {
     if (analyzerRef.current) {
       setAmplitude(analyzerRef.current.getAmplitude());
       rafRef.current = requestAnimationFrame(updateAmplitude);
     }
-  }, []);
+  }
+
+  const finishRecording = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    if (!analyzerRef.current) return;
+    setStage('analyzing');
+    const metrics = analyzerRef.current.stop();
+    const profileType = classifyProfile(metrics);
+    const data = PROFILE_DATA[profileType];
+    const profile: BreathProfile = { ...data, metrics, timestamp: Date.now() };
+    saveProfile(profile);
+    setTimeout(() => onComplete(profile), 1500);
+  }, [onComplete]);
 
   const startRecording = async () => {
     const analyzer = new BreathAnalyzer();
@@ -48,19 +60,7 @@ export function Assessment({ onComplete }: Props) {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [stage]);
-
-  const finishRecording = () => {
-    cancelAnimationFrame(rafRef.current);
-    if (!analyzerRef.current) return;
-    setStage('analyzing');
-    const metrics = analyzerRef.current.stop();
-    const profileType = classifyProfile(metrics);
-    const data = PROFILE_DATA[profileType];
-    const profile: BreathProfile = { ...data, metrics, timestamp: Date.now() };
-    saveProfile(profile);
-    setTimeout(() => onComplete(profile), 1500);
-  };
+  }, [stage, finishRecording]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 

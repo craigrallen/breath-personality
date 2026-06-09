@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 
 interface Props {
   phase: 'inhale' | 'hold' | 'exhale' | 'holdAfter' | 'idle';
@@ -9,18 +8,12 @@ interface Props {
 }
 
 export function BreathCircle({ phase, duration, color = '#38bdf8', size = 240, amplitude }: Props) {
-  const [scale, setScale] = useState(0.6);
-
-  useEffect(() => {
-    if (amplitude !== undefined) {
-      setScale(0.5 + amplitude * 3);
-      return;
-    }
-    if (phase === 'inhale') setScale(1);
-    else if (phase === 'exhale') setScale(0.55);
-    else if (phase === 'idle') setScale(0.7);
-    // hold phases keep current scale
-  }, [phase, amplitude]);
+  // hold always follows inhale (scale 1); holdAfter always follows exhale (scale 0.55)
+  const scale = amplitude !== undefined
+    ? 0.5 + amplitude * 3
+    : (phase === 'inhale' || phase === 'hold') ? 1
+    : (phase === 'exhale' || phase === 'holdAfter') ? 0.55
+    : 0.7; // idle
 
   const label = amplitude !== undefined
     ? 'Breathe naturally'

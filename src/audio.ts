@@ -87,7 +87,7 @@ export class BreathAnalyzer {
       : 15;
 
     // Inhale/exhale ratio from crossing pairs
-    let totalInhale = 0, totalExhale = 0, pairs = 0;
+    let totalInhale = 0, totalExhale = 0;
     for (let i = 0; i < crossings.length - 1; i++) {
       const dt = this.timestamps[crossings[i + 1].idx] - this.timestamps[crossings[i].idx];
       if (crossings[i].rising) {
@@ -95,7 +95,6 @@ export class BreathAnalyzer {
       } else {
         totalExhale += dt;
       }
-      pairs++;
     }
     const inhaleExhaleRatio = totalExhale > 0 ? totalInhale / totalExhale : 1;
 
